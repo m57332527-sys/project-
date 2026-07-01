@@ -1,0 +1,68 @@
+name: Clip Engine — Auto Process & Deploy
+
+# Triggers whenever video_pool.txt changes on the main branch,
+# OR manually from the Actions tab (workflow_dispatch) for testing.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "video_pool.txt"
+  workflow_dispatch: {}
+
+# Prevent overlapping runs from clobbering the same output files
+concurrency:
+  group: clip-engine
+  cancel-in-progress: false
+
+jobs:
+  process-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run video processing engine
+        env:
+          WHISPER_MODEL_SIZE: base
+        run: python process_video.py
+
+      - name: Commit generated clips back to repo
+        run: |
+          git config user.name "clip-engine-bot"
+          git config user.email "actions@github.com"
+          git add public/clips .processed_urls.json
+          if git diff --cached --quiet; then
+            echo "No new clips generated — nothing to commit."
+          else
+            git commit -m "chore(clip-engine): auto-generate new shorts [skip ci]"
+            git push
+          fi
+
+      - name: Deploy to Vercel (Production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
+          working-directory: ./
