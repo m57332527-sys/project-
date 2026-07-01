@@ -1,0 +1,5 @@
+moviepy==1.0.3
+numpy>=1.24,<2.0
+requests>=2.31
+faster-whisper==1.0.3
+Pillow>=10.0

@@ -1,0 +1,4 @@
+# Add one direct video file URL per line (must be a direct .mp4/.mov link, not a YouTube page).
+# Lines starting with # are ignored.
+# Example:
+# https://example-cdn.com/podcast-episode-42.mp4
