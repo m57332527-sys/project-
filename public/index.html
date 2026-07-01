@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ClipEngine — Auto-Generated Shorts</title>
+<meta name="description" content="Automatically generated short-form clips, updated daily." />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #0b0b0f; }
+  .clip-card { aspect-ratio: 9 / 16; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+</style>
+</head>
+<body class="text-zinc-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-20 backdrop-blur bg-zinc-950/80 border-b border-zinc-800">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-xl font-extrabold tracking-tight">
+        ⚡ Clip<span class="text-indigo-400">Engine</span>
+      </h1>
+      <span id="clip-count" class="text-xs text-zinc-400"></span>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+
+    <!-- Hero -->
+    <section class="mb-10">
+      <h2 class="text-2xl md:text-3xl font-bold mb-2">Fresh AI-clipped shorts, auto-published</h2>
+      <p class="text-zinc-400 max-w-2xl">
+        Every clip below was cropped, hook-detected, and captioned automatically —
+        no manual editing involved.
+      </p>
+    </section>
+
+    <!-- Loading state -->
+    <div id="loading" class="text-center py-20 text-zinc-500">Loading clips…</div>
+
+    <!-- Empty state -->
+    <div id="empty" class="hidden text-center py-20 text-zinc-500">
+      No clips yet. Add a video URL to <code class="text-indigo-400">video_pool.txt</code> to generate your first one.
+    </div>
+
+    <!-- Video grid -->
+    <section id="grid" class="hidden grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-16"></section>
+
+    <!-- Amazon Associates gear section -->
+    <section class="border-t border-zinc-800 pt-10">
+      <h3 class="text-lg font-bold mb-1">🎥 Gear used to create content like this</h3>
+      <p class="text-zinc-400 text-sm mb-6">As an Amazon Associate, purchases through these links support this channel at no extra cost to you.</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <a href="https://www.amazon.com/s?k=usb+condenser+microphone&tag=timevalue0e2-20"
+           target="_blank" rel="noopener sponsored"
+           class="block p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-indigo-500 transition">
+          <span class="text-2xl">🎙️</span>
+          <p class="font-semibold mt-2">USB Condenser Microphone</p>
+          <p class="text-xs text-zinc-500 mt-1">Clean audio = better hook detection</p>
+          <span class="inline-block mt-3 text-indigo-400 text-sm font-medium">Shop on Amazon →</span>
+        </a>
+
+        <a href="https://www.amazon.com/s?k=ring+light+creator&tag=timevalue0e2-20"
+           target="_blank" rel="noopener sponsored"
+           class="block p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-indigo-500 transition">
+          <span class="text-2xl">💡</span>
+          <p class="font-semibold mt-2">Ring Light Kit</p>
+          <p class="text-xs text-zinc-500 mt-1">Consistent lighting for vertical shorts</p>
+          <span class="inline-block mt-3 text-indigo-400 text-sm font-medium">Shop on Amazon →</span>
+        </a>
+
+        <a href="https://www.amazon.com/s?k=phone+tripod+creator&tag=timevalue0e2-20"
+           target="_blank" rel="noopener sponsored"
+           class="block p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-indigo-500 transition">
+          <span class="text-2xl">📱</span>
+          <p class="font-semibold mt-2">Phone Tripod & Mount</p>
+          <p class="text-xs text-zinc-500 mt-1">Stable vertical-first recording</p>
+          <span class="inline-block mt-3 text-indigo-400 text-sm font-medium">Shop on Amazon →</span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="text-center text-xs text-zinc-600 py-8">
+    Built with open-source tooling · No paid clipping software used
+  </footer>
+
+  <!-- Simple modal player -->
+  <div id="player-modal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+    <button id="close-modal" class="absolute top-5 right-5 text-white text-3xl leading-none">&times;</button>
+    <video id="modal-video" class="max-h-[90vh] rounded-xl" controls autoplay playsinline></video>
+  </div>
+
+<script>
+async function loadClips() {
+  const loadingEl = document.getElementById('loading');
+  const emptyEl = document.getElementById('empty');
+  const gridEl = document.getElementById('grid');
+  const countEl = document.getElementById('clip-count');
+
+  try {
+    const res = await fetch('clips/manifest.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('manifest not found');
+    const clips = await res.json();
+
+    loadingEl.classList.add('hidden');
+
+    if (!clips.length) {
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+
+    countEl.textContent = `${clips.length} clip${clips.length === 1 ? '' : 's'}`;
+    gridEl.classList.remove('hidden');
+
+    gridEl.innerHTML = clips.map(clip => `
+      <div class="clip-card group relative rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 cursor-pointer"
+           data-video="${clip.file}">
+        <img src="${clip.thumbnail}" alt="${clip.caption_preview || 'clip thumbnail'}"
+             class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+        <div class="absolute bottom-2 left-2 right-2">
+          <p class="text-xs font-medium line-clamp-2">${clip.caption_preview || 'Watch clip'}</p>
+        </div>
+        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+          <span class="text-4xl">▶</span>
+        </div>
+      </div>
+    `).join('');
+
+    document.querySelectorAll('.clip-card').forEach(card => {
+      card.addEventListener('click', () => openPlayer(card.dataset.video));
+    });
+
+  } catch (err) {
+    loadingEl.classList.add('hidden');
+    emptyEl.classList.remove('hidden');
+    console.error('Failed to load clips:', err);
+  }
+}
+
+function openPlayer(src) {
+  const modal = document.getElementById('player-modal');
+  const video = document.getElementById('modal-video');
+  video.src = src;
+  modal.classList.remove('hidden');
+}
+
+document.getElementById('close-modal').addEventListener('click', () => {
+  const modal = document.getElementById('player-modal');
+  const video = document.getElementById('modal-video');
+  video.pause();
+  video.src = '';
+  modal.classList.add('hidden');
+});
+
+loadClips();
+</script>
+</body>
+</html>
